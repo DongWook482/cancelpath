@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://dongwook482.github.io/cancelpath/sitemap.xml

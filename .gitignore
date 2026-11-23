@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local env and secrets — never commit credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Do not import anything from ~/.config or local tool caches
+.gh-token
+.credentials

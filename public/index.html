@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CancelPath — Verified Cancellation Route Directory</title>
+  <meta name="description" content="Verified subscription &amp; membership cancellation routes built from real user friction.">
+  <link rel="stylesheet" href="/cancelpath/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/cancelpath/index.html">CancelPath</a>
+      <nav class="nav">
+        <a href="/cancelpath/index.html">Directory</a>
+        <a href="/cancelpath/categories/index.html">Categories</a>
+        <a href="/cancelpath/about.html">About</a>
+        <a href="/cancelpath/privacy.html">Privacy</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Reserved ad slot "top": add an approved ad unit only after a network is connected. -->
+<aside class="ad-slot" id="ad-slot-top" data-ad-slot="top" hidden></aside>
+    
+    <section class="hero">
+      <h1>Escape Hidden Cancellation Loops.</h1>
+      <p>Verified subscription & membership cancellation routes built from real user friction.</p>
+      <input id="filterInput" class="search-input" type="search" placeholder="Filter guides by service, gym, app, or issue (e.g. Planet Fitness, billing)..." aria-label="Filter guides">
+      <div style="margin-top: 14px;"><a class="badge" href="/cancelpath/categories/gyms-fitness.html">Gyms &amp; Fitness (1)</a><a class="badge" href="/cancelpath/categories/wearables-hardware.html">Wearables &amp; Hardware (0)</a><a class="badge" href="/cancelpath/categories/ai-saas.html">AI &amp; SaaS Tools (0)</a><a class="badge" href="/cancelpath/categories/media-news.html">Media &amp; Newsletters (0)</a><a class="badge" href="/cancelpath/categories/streaming-apps.html">Streaming &amp; App Billing (0)</a></div>
+    </section>
+
+    <h2>Published Guides (1)</h2>
+    <div class="grid" id="guidesGrid">
+      <div class="card guide-card" data-search="planet fitness how to cancel planet fitness (2026): hidden web portal, out-of-state loop &amp; 10th cutoff gyms &amp; fitness why the planet fitness mobile app lacks a cancel button, the direct web portal urls, how to handle out-of-state franchise pushback, and how to document cancellation before the 10th.">
+          <span class="badge">Gyms &amp; Fitness</span>
+          <span class="badge">Medium</span>
+          <h3><a href="/cancelpath/guides/planet-fitness-cancel-membership.html">How to Cancel Planet Fitness (2026): Hidden Web Portal, Out-of-State Loop &amp; 10th Cutoff</a></h3>
+          <p class="muted">Why the Planet Fitness mobile app lacks a cancel button, the direct web portal URLs, how to handle out-of-state franchise pushback, and how to document cancellation before the 10th.</p>
+          <p class="muted"><strong>Cutoff / Trap:</strong> Cancel by the 10th of the month (7 days before the 17th billing date)</p>
+        </div>
+    </div>
+
+    <section class="card">
+      <h3>Why CancelPath Exists</h3>
+      <p class="muted">Every day, people post on X and Reddit asking why a mobile app hides its cancel button, why a gym demands in-person cancellation after moving, or why an expired invoice blocks cancellation. This directory publishes one verified, source-cited escape guide each night.</p>
+    </section>
+
+    <script>
+      const input = document.getElementById('filterInput');
+      const cards = Array.from(document.querySelectorAll('.guide-card'));
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        cards.forEach(c => {
+          c.style.display = (!q || c.dataset.search.includes(q)) ? '' : 'none';
+        });
+      });
+    </script>
+    
+    <!-- Reserved ad slot "bottom": add an approved ad unit only after a network is connected. -->
+<aside class="ad-slot" id="ad-slot-bottom" data-ad-slot="bottom" hidden></aside>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p><strong>CancelPath</strong> — Independent cancellation route directory built from public support docs &amp; real user complaints.</p>
+      <p class="muted"><a href="/cancelpath/about.html">About</a> &middot; <a href="/cancelpath/privacy.html">Privacy</a> &middot; <a href="/cancelpath/sitemap.xml">Sitemap</a></p>
+      <p class="muted">Always confirm cancellation in writing and check your next statement. No affiliate or ad networks are active yet.</p>
+    </div>
+  </footer>
+</body>
+</html>
