@@ -30,7 +30,11 @@ PLANNED_CATEGORIES = [
 
 
 def load_site_config() -> dict[str, Any]:
-    cfg: dict[str, Any] = {"base_url": DEFAULT_PRODUCTION_URL, "ads_enabled": False}
+    cfg: dict[str, Any] = {
+        "base_url": DEFAULT_PRODUCTION_URL,
+        "ads_enabled": False,
+        "ga_measurement_id": "",
+    }
     if CONFIG_PATH.exists():
         cfg.update(json.loads(CONFIG_PATH.read_text(encoding="utf-8")))
     env = os.environ.get("SITE_BASE_URL")
@@ -38,12 +42,15 @@ def load_site_config() -> dict[str, Any]:
         cfg["base_url"] = env
     cfg["base_url"] = str(cfg["base_url"]).rstrip("/")
     cfg["ads_enabled"] = bool(cfg.get("ads_enabled", False))
+    raw_ga = str(cfg.get("ga_measurement_id") or "").strip()
+    cfg["ga_measurement_id"] = raw_ga if re.fullmatch(r"G-[A-Z0-9]+", raw_ga) else ""
     return cfg
 
 
 SITE_CONFIG = load_site_config()
 BASE_URL = SITE_CONFIG["base_url"]
 ADS_ENABLED = SITE_CONFIG["ads_enabled"]
+GA_MEASUREMENT_ID = SITE_CONFIG["ga_measurement_id"]
 _parsed_path = urlparse(BASE_URL).path.rstrip("/")
 BASE_PATH = f"{_parsed_path}/" if _parsed_path else "/"
 
@@ -167,6 +174,21 @@ def render_markdown(md: str) -> str:
     return "\n".join(out)
 
 
+def gtag_head_html() -> str:
+    """Standard GA4 gtag.js snippet, omitted when no valid measurement ID is set."""
+    if not GA_MEASUREMENT_ID:
+        return ""
+    mid = html.escape(GA_MEASUREMENT_ID, quote=True)
+    return f"""  <script async src="https://www.googletagmanager.com/gtag/js?id={mid}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+    gtag('config', '{mid}');
+  </script>
+"""
+
+
 def ad_slot_html(slot_id: str) -> str:
     """Reserved spot for a future approved ad unit. No dummy creatives."""
     escaped = html.escape(slot_id)
@@ -190,6 +212,7 @@ def page_shell(title: str, description: str, body_html: str) -> str:
   <title>{html.escape(title)}</title>
   <meta name="description" content="{html.escape(description)}">
   <link rel="stylesheet" href="{href('styles.css')}">
+{gtag_head_html()}
 </head>
 <body>
   <header class="site-header">
@@ -354,6 +377,7 @@ ABOUT_BODY = """
   <h2>Project status</h2>
   <p>The site is a static directory published at <a href="https://dongwook482.github.io/cancelpath/">dongwook482.github.io/cancelpath</a> from the public repository <a href="https://github.com/DongWook482/cancelpath">github.com/DongWook482/cancelpath</a>. No user accounts, comments, or payments are collected here.</p>
   <p>Advertising and affiliate links are not active yet. Reserved slots exist in the page layout for a future approved ad unit; they stay empty until a network is connected and disclosed.</p>
+  <p>We use Google Analytics 4 to measure visits. Details are in the <a href="https://dongwook482.github.io/cancelpath/privacy.html">Privacy Policy</a>.</p>
   <h2>Contact</h2>
   <p>For corrections to a guide, open an issue or pull request on the public GitHub repository linked above.</p>
 </article>
@@ -362,14 +386,17 @@ ABOUT_BODY = """
 PRIVACY_BODY = """
 <article class="legal-page">
   <h1>Privacy Policy</h1>
-  <p>Last updated: 23 November 2026.</p>
+  <p>Last updated: 24 November 2026.</p>
   <p>CancelPath is a static informational website. We want this policy to stay accurate, so it only describes practices that are in use today.</p>
   <h2>Information we collect</h2>
-  <p>This site does not ask you to create an account, submit a form, or pay for anything. We do not operate our own analytics, advertising, or comment system at this time.</p>
+  <p>This site does not ask you to create an account, submit a form, or pay for anything. We do not run advertising or an affiliate program at this time, and we do not operate a first-party comment system.</p>
+  <h2>Google Analytics</h2>
+  <p>CancelPath uses Google Analytics 4 (GA4) to understand how the public site is used (for example, how many people visit, which pages are viewed, and from which general regions or devices). The measurement tag runs on every generated page. Google may collect device and usage data such as IP address, browser type, referring URL, and page path, and may set or read cookies or similar storage in your browser.</p>
+  <p>This processing is handled by Google under the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>. Google also explains how it uses data from sites and apps that use its services at <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">policies.google.com/technologies/partner-sites</a>.</p>
   <h2>Hosting logs</h2>
   <p>The site is hosted on GitHub Pages. GitHub may process standard server or CDN request data (such as IP address, user agent, and requested URL) according to the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub Privacy Statement</a>. CancelPath does not receive a copy of those logs.</p>
   <h2>Cookies and advertising</h2>
-  <p>CancelPath does not set first-party cookies and does not run Google AdSense or any other ad or affiliate network today. If advertising, affiliate links, or a traffic-measurement tool is added later, this Privacy Policy will be updated before those features go live, and any required consent or disclosure will be added at the same time.</p>
+  <p>CancelPath does not run Google AdSense or any other ad or affiliate network today. Google Analytics may set or read cookies (or similar storage) for measurement only. If advertising or affiliate links are added later, this Privacy Policy will be updated before those features go live, and any required consent or disclosure will be added at the same time.</p>
   <h2>External links</h2>
   <p>Guides link to official company portals, support pages, and public discussion threads. Those third-party sites have their own privacy practices, which we do not control.</p>
   <h2>Changes</h2>
@@ -567,8 +594,23 @@ def build() -> None:
     (PUBLIC_DIR / "privacy.html").write_text(
         page_shell(
             f"Privacy Policy | {SITE_TITLE}",
-            "CancelPath privacy policy: what we collect today, hosting, and future advertising disclosure.",
+            "CancelPath privacy policy: Google Analytics, cookies, hosting, and advertising status.",
             PRIVACY_BODY,
+        ),
+        encoding="utf-8",
+    )
+    not_found_body = (
+        '<article class="legal-page">'
+        "<h1>Page not found</h1>"
+        f'<p>That address is not in the directory. Return to the <a href="{href("index.html")}">CancelPath homepage</a> '
+        f'or browse <a href="{href("categories/index.html")}">categories</a>.</p>'
+        "</article>"
+    )
+    (PUBLIC_DIR / "404.html").write_text(
+        page_shell(
+            f"Page not found | {SITE_TITLE}",
+            "This CancelPath page does not exist.",
+            not_found_body,
         ),
         encoding="utf-8",
     )
@@ -578,6 +620,7 @@ def build() -> None:
         (f"{BASE_URL}/index.html", today),
         (f"{BASE_URL}/about.html", today),
         (f"{BASE_URL}/privacy.html", today),
+        (f"{BASE_URL}/404.html", today),
         *sitemap_urls,
     ]
 
@@ -599,6 +642,8 @@ def build() -> None:
     print(f"Built {len(entries)} guide(s), {len(sitemap_urls)} total URLs")
     print(f"BASE_URL={BASE_URL}")
     print(f"BASE_PATH={BASE_PATH}")
+    print(f"GA_MEASUREMENT_ID={GA_MEASUREMENT_ID or '(disabled)'}")
+    print(f"ADS_ENABLED={ADS_ENABLED}")
 
 
 if __name__ == "__main__":

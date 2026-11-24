@@ -24,3 +24,6 @@ Thumbs.db
 # Do not import anything from ~/.config or local tool caches
 .gh-token
 .credentials
+
+# Local GA snapshot written by the nightly job (not deployed)
+analytics_snapshot.json
