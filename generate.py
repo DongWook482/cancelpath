@@ -26,6 +26,7 @@ PLANNED_CATEGORIES = [
     ("ai-saas", "AI & SaaS Tools", "Past-due lockouts, trial errors, and billing portal dead-ends."),
     ("media-news", "Media & Newsletters", "Print/digital login loops and phone-only retention desks."),
     ("streaming-apps", "Streaming & App Billing", "Apple App Store, Google Play, and direct-card mismatches."),
+    ("consumer-rights", "Consumer Rights", "Checklists and explainers for auto-renewals, billing-channel traps, and cancellation rights."),
 ]
 
 
@@ -58,6 +59,21 @@ BASE_PATH = f"{_parsed_path}/" if _parsed_path else "/"
 def href(path: str) -> str:
     """Root-relative path that works under the GitHub Pages project subpath."""
     return BASE_PATH + path.lstrip("/")
+
+
+PAGE_TYPE_LABELS = {
+    "guide": "Guide",
+    "checklist": "Checklist",
+    "explainer": "Rights explainer",
+    "roundup": "Roundup",
+}
+
+
+def page_type_label(entry: dict[str, Any]) -> str:
+    ptype = str(entry.get("page_type") or "guide").strip().lower()
+    if ptype == "guide":
+        return entry.get("difficulty") or "Guide"
+    return PAGE_TYPE_LABELS.get(ptype, ptype.replace("-", " ").title())
 
 
 def parse_entry(path: Path) -> dict[str, Any]:
@@ -120,6 +136,26 @@ def render_markdown(md: str) -> str:
             code_html = html.escape("\n".join(code_lines))
             cls = f' class="lang-{html.escape(lang)}"' if lang else ""
             out.append(f"<pre><code{cls}>{code_html}</code></pre>")
+            continue
+
+        # GitHub-style table
+        if "|" in stripped and i + 1 < len(lines) and re.match(r"^\s*\|?\s*:?-{3,}", lines[i + 1].strip()):
+            rows = []
+            while i < len(lines) and "|" in lines[i]:
+                raw = lines[i].strip()
+                i += 1
+                if re.match(r"^\|?\s*:?-{3,}", raw):
+                    continue
+                cells = [c.strip() for c in raw.strip("|").split("|")]
+                rows.append(cells)
+            if rows:
+                header, *body = rows
+                thead = "<tr>" + "".join(f"<th>{render_inline(c)}</th>" for c in header) + "</tr>"
+                tbody = "".join(
+                    "<tr>" + "".join(f"<td>{render_inline(c)}</td>" for c in row) + "</tr>"
+                    for row in body
+                )
+                out.append(f'<div class="table-wrap"><table><thead>{thead}</thead><tbody>{tbody}</tbody></table></div>')
             continue
 
         if stripped.startswith("### "):
@@ -362,6 +398,10 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
 .legal-page h1 { margin-top: 0; }
 .ad-slot { margin: 0; padding: 0; min-height: 0; }
 .ad-slot.is-active { margin: 0 0 16px; min-height: 90px; }
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 0.95rem; }
+th, td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+th { background: var(--accent-soft); }
 """
 
 ABOUT_BODY = """
@@ -448,7 +488,7 @@ def build() -> None:
         <p class="muted"><a href="{href('index.html')}">Directory</a> / <a href="{href('categories/' + e['category_slug'] + '.html')}">{html.escape(e['category'])}</a> / {html.escape(e['service_name'])}</p>
         <article>
           <span class="badge">{html.escape(e['category'])}</span>
-          <span class="badge">Difficulty: {html.escape(e.get('difficulty', 'Unknown'))}</span>
+          <span class="badge">{html.escape(page_type_label(e))}</span>
           <h1>{html.escape(e['title'])}</h1>
           <p class="muted">Updated: {html.escape(e.get('updated_at', today))} &middot; Method: {html.escape(e.get('cancel_method', 'Web'))}</p>
 
@@ -491,7 +531,7 @@ def build() -> None:
         if cat_entries:
             cards = "".join(
                 f"""<div class="card">
-                  <span class="badge">{html.escape(e.get('difficulty', 'Guide'))}</span>
+                  <span class="badge">{html.escape(page_type_label(e))}</span>
                   <h3><a href="{href('guides/' + e['slug'] + '.html')}">{html.escape(e['title'])}</a></h3>
                   <p class="muted">{html.escape(e['summary'])}</p>
                 </div>"""
@@ -538,7 +578,7 @@ def build() -> None:
     guide_cards = "".join(
         f"""<div class="card guide-card" data-search="{html.escape((e['service_name'] + ' ' + e['title'] + ' ' + e['category'] + ' ' + e['summary']).lower())}">
           <span class="badge">{html.escape(e['category'])}</span>
-          <span class="badge">{html.escape(e.get('difficulty', 'Guide'))}</span>
+          <span class="badge">{html.escape(page_type_label(e))}</span>
           <h3><a href="{href('guides/' + e['slug'] + '.html')}">{html.escape(e['title'])}</a></h3>
           <p class="muted">{html.escape(e['summary'])}</p>
           <p class="muted"><strong>Cutoff / Trap:</strong> {html.escape(e.get('cutoff_rule', 'See guide'))}</p>
@@ -557,7 +597,7 @@ def build() -> None:
       <div style="margin-top: 14px;">{cat_pills}</div>
     </section>
 
-    <h2>Published Guides ({len(entries)})</h2>
+    <h2>Published Pages ({len(entries)})</h2>
     <div class="grid" id="guidesGrid">
       {guide_cards}
     </div>

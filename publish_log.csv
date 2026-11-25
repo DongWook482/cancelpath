@@ -2,3 +2,4 @@ date_kst,slug,service_name,category,sources_count,status,notes
 2026-11-23,planet-fitness-cancel-membership,Planet Fitness,Gyms & Fitness,4,published,Seeded initial guide from official FAQ and Oct 2026 r/PlanetFitnessMembers reports
 2026-11-23,vanity-fair-cancel-subscription,Vanity Fair,News & Magazines,7,published,X login-loop complaint (Nov 23 2026) + official VF/Conde Nast FAQ + Apple Support
 2026-11-24,linkedin-premium-cancel-subscription,LinkedIn Premium,Software & Apps,9,published,X complaint (Nov 24 2026 @robjohnsonrj1) + r/LegalAdviceUK desktop-only report + LinkedIn/Apple/Google Play help
+2026-11-25,surprise-autorenewal-cancel-and-dispute-checklist,Auto-renewals & billing disputes,Consumer Rights,23,published,"checklist (not a single-service guide): surprise auto-renewal, billing-channel identification, CFPB dispute steps, and vacated FTC click-to-cancel status; X Nov 21-25 2026 plus official CFPB/FTC/NYC/CA/ROSCA/Apple/Google/Amazon sources"

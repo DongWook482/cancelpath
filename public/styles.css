@@ -114,3 +114,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
 .legal-page h1 { margin-top: 0; }
 .ad-slot { margin: 0; padding: 0; min-height: 0; }
 .ad-slot.is-active { margin: 0 0 16px; min-height: 90px; }
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 0.95rem; }
+th, td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+th { background: var(--accent-soft); }
