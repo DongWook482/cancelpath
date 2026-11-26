@@ -65,8 +65,8 @@ for i in $(seq 1 24); do
       sleep 10
       continue
     fi
-    if ! grep -q "Plus Jakarta Sans" /tmp/cancelpath-home.body; then
-      echo "    attempt ${i}: homepage HTTP 200 but missing new typography (stale Pages build, retry in 10s)"
+    if ! grep -qE "Plus\+Jakarta\+Sans|hero-home" /tmp/cancelpath-home.body; then
+      echo "    attempt ${i}: homepage HTTP 200 but missing redesigned typography/hero (stale Pages build, retry in 10s)"
       sleep 10
       continue
     fi
