@@ -25,15 +25,26 @@ else
   git commit -m "$MSG"
 fi
 
-echo "==> Pushing main"
+SHA="$(git rev-parse HEAD)"
+echo "==> Pushing main (sha ${SHA})"
 git push origin main
 
-# Wait for the just-pushed workflow rather than accepting a stale 200 from the previous Pages build.
+# Wait for the run whose headSha matches this push, not a previous successful run.
 if command -v gh >/dev/null 2>&1; then
-  RUN_ID="$(gh run list --repo DongWook482/cancelpath --branch main --workflow "Deploy GitHub Pages" --limit 1 --json databaseId --jq '.[0].databaseId' || true)"
+  RUN_ID=""
+  for i in $(seq 1 24); do
+    RUN_ID="$(gh run list --repo DongWook482/cancelpath --branch main --workflow "Deploy GitHub Pages" --limit 10 --json databaseId,headSha --jq ".[] | select(.headSha==\"${SHA}\") | .databaseId" | head -n 1 || true)"
+    if [ -n "${RUN_ID}" ]; then
+      break
+    fi
+    echo "    waiting for Actions run for ${SHA} (attempt ${i})"
+    sleep 5
+  done
   if [ -n "${RUN_ID}" ]; then
-    echo "==> Waiting for Actions run ${RUN_ID}"
+    echo "==> Waiting for Actions run ${RUN_ID} (sha ${SHA})"
     gh run watch "${RUN_ID}" --repo DongWook482/cancelpath --exit-status
+  else
+    echo "warning: no Actions run found for ${SHA} after waiting" >&2
   fi
 fi
 
@@ -46,6 +57,16 @@ for i in $(seq 1 24); do
   if [ "$code" = "200" ]; then
     if [ -n "$GA_ID" ] && ! grep -q "$GA_ID" /tmp/cancelpath-home.body; then
       echo "    attempt ${i}: homepage HTTP 200 but missing ${GA_ID} (retry in 10s)"
+      sleep 10
+      continue
+    fi
+    if ! grep -q "contact.html" /tmp/cancelpath-home.body; then
+      echo "    attempt ${i}: homepage HTTP 200 but missing contact.html (stale Pages build, retry in 10s)"
+      sleep 10
+      continue
+    fi
+    if ! grep -q "Plus Jakarta Sans" /tmp/cancelpath-home.body; then
+      echo "    attempt ${i}: homepage HTTP 200 but missing new typography (stale Pages build, retry in 10s)"
       sleep 10
       continue
     fi
@@ -64,7 +85,7 @@ fi
 
 echo "==> Verifying public URLs"
 fail=0
-for path in "/" "/index.html" "/styles.css" "/guides/planet-fitness-cancel-membership.html" "/categories/gyms-fitness.html" "/about.html" "/privacy.html" "/sitemap.xml"; do
+for path in "/" "/index.html" "/styles.css" "/guides/planet-fitness-cancel-membership.html" "/categories/gyms-fitness.html" "/about.html" "/contact.html" "/privacy.html" "/sitemap.xml"; do
   url="${SITE_BASE_URL}${path}"
   # strip double slash except after https:
   code=$(curl -sS -o /tmp/cancelpath-verify.body -w "%{http_code}" -A "CancelPath-deploy/1.0" "$url" || true)
@@ -73,6 +94,17 @@ for path in "/" "/index.html" "/styles.css" "/guides/planet-fitness-cancel-membe
     fail=1
   fi
 done
+
+css_code=$(curl -sS -o /tmp/cancelpath-css.body -w "%{http_code}" -A "CancelPath-deploy/1.0" "${SITE_BASE_URL}/styles.css" || true)
+if [ "$css_code" != "200" ] || ! grep -q "hero-home" /tmp/cancelpath-css.body; then
+  echo "error: styles.css is missing the redesigned hero-home rule (HTTP ${css_code})" >&2
+  fail=1
+fi
+contact_code=$(curl -sS -o /tmp/cancelpath-contact.body -w "%{http_code}" -A "CancelPath-deploy/1.0" "${SITE_BASE_URL}/contact.html" || true)
+if [ "$contact_code" != "200" ] || ! grep -q "github.com/DongWook482/cancelpath/issues" /tmp/cancelpath-contact.body; then
+  echo "error: contact.html is missing the GitHub Issues channel (HTTP ${contact_code})" >&2
+  fail=1
+fi
 
 if ! grep -q "https://dongwook482.github.io/cancelpath/" /tmp/cancelpath-verify.body && \
    ! grep -q "urlset" /tmp/cancelpath-verify.body; then

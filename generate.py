@@ -22,8 +22,11 @@ DEFAULT_PRODUCTION_URL = "https://dongwook482.github.io/cancelpath"
 
 PLANNED_CATEGORIES = [
     ("gyms-fitness", "Gyms & Fitness", "In-person loops, franchise contracts, and billing cutoffs."),
+    ("delivery-rideshare", "Delivery & Rideshare", "App vs. web cancellation, saved-payment renewals, and support dead-ends."),
     ("wearables-hardware", "Wearables & Hardware", "App-hidden cancel buttons and lost-device billing traps."),
+    ("software-apps", "Software & Apps", "Desktop-only cancel buttons and store-vs-app billing mismatches."),
     ("ai-saas", "AI & SaaS Tools", "Past-due lockouts, trial errors, and billing portal dead-ends."),
+    ("news-magazines", "News & Magazines", "Print/digital login loops and publisher billing desks."),
     ("media-news", "Media & Newsletters", "Print/digital login loops and phone-only retention desks."),
     ("streaming-apps", "Streaming & App Billing", "Apple App Store, Google Play, and direct-card mismatches."),
     ("consumer-rights", "Consumer Rights", "Checklists and explainers for auto-renewals, billing-channel traps, and cancellation rights."),
@@ -74,6 +77,15 @@ def page_type_label(entry: dict[str, Any]) -> str:
     if ptype == "guide":
         return entry.get("difficulty") or "Guide"
     return PAGE_TYPE_LABELS.get(ptype, ptype.replace("-", " ").title())
+
+
+def category_chip(slug: str, label: str, href_path: str | None = None) -> str:
+    safe_slug = html.escape(slug)
+    safe_label = html.escape(label)
+    cls = f"badge badge-cat badge-cat-{safe_slug}"
+    if href_path:
+        return f'<a class="{cls}" href="{href(href_path)}">{safe_label}</a>'
+    return f'<span class="{cls}">{safe_label}</span>'
 
 
 def parse_entry(path: Path) -> dict[str, Any]:
@@ -247,33 +259,50 @@ def page_shell(title: str, description: str, body_html: str) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{html.escape(title)}</title>
   <meta name="description" content="{html.escape(description)}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{href('styles.css')}">
 {gtag_head_html()}
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="{href('index.html')}">{SITE_TITLE}</a>
-      <nav class="nav">
+      <a class="brand" href="{href('index.html')}"><span class="brand-mark" aria-hidden="true"></span>{SITE_TITLE}</a>
+      <nav class="nav" aria-label="Primary">
         <a href="{href('index.html')}">Directory</a>
         <a href="{href('categories/index.html')}">Categories</a>
         <a href="{href('about.html')}">About</a>
+        <a href="{href('contact.html')}">Contact</a>
         <a href="{href('privacy.html')}">Privacy</a>
       </nav>
     </div>
   </header>
 
-  <main class="container">
+  <main id="main" class="container">
     {ad_slot_html('top')}
     {body_html}
     {ad_slot_html('bottom')}
   </main>
 
   <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <p class="brand footer-logo"><span class="brand-mark" aria-hidden="true"></span>{SITE_TITLE}</p>
+        <p>Independent cancellation routes, cited from official help pages and real public complaints.</p>
+      </div>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="{href('index.html')}">Directory</a>
+        <a href="{href('categories/index.html')}">Categories</a>
+        <a href="{href('about.html')}">About</a>
+        <a href="{href('contact.html')}">Contact</a>
+        <a href="{href('privacy.html')}">Privacy</a>
+        <a href="{href('sitemap.xml')}">Sitemap</a>
+      </nav>
+    </div>
     <div class="container">
-      <p><strong>{SITE_TITLE}</strong> — Independent cancellation route directory built from public support docs &amp; real user complaints.</p>
-      <p class="muted"><a href="{href('about.html')}">About</a> &middot; <a href="{href('privacy.html')}">Privacy</a> &middot; <a href="{href('sitemap.xml')}">Sitemap</a></p>
-      <p class="muted">Always confirm cancellation in writing and check your next statement. No affiliate or ad networks are active yet.</p>
+      <p class="muted footer-note">Always confirm cancellation in writing and check your next statement. Guides are not legal advice. No affiliate or ad networks are active yet.</p>
     </div>
   </footer>
 </body>
@@ -281,145 +310,349 @@ def page_shell(title: str, description: str, body_html: str) -> str:
 """
 
 
+
 CSS = """
 :root {
-  --bg: #f7f8fa;
+  --bg: #f4fbfb;
+  --bg-tint: #e8f6f5;
   --card: #ffffff;
-  --text: #161b22;
-  --muted: #57606a;
-  --border: #d8dee4;
-  --accent: #0b57d0;
-  --accent-soft: #eef4ff;
-  --warn-bg: #fff8e6;
-  --warn-border: #e3b341;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: #d7e4e6;
+  --accent: #0f766e;
+  --accent-2: #4338ca;
+  --accent-hot: #0d9488;
+  --accent-soft: #ccfbf1;
+  --indigo-soft: #e0e7ff;
+  --warn-bg: #fff7ed;
+  --warn-border: #f97316;
+  --warn-text: #9a3412;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 28px rgba(15, 23, 42, 0.06);
+  --shadow-hover: 0 8px 28px rgba(15, 23, 42, 0.12);
+  --radius: 16px;
+  --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 * { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
+  font-family: var(--font);
+  background:
+    radial-gradient(1200px 420px at 8% -10%, #d1fae5 0%, transparent 60%),
+    radial-gradient(900px 380px at 100% 0%, #e0e7ff 0%, transparent 55%),
+    var(--bg);
   color: var(--text);
-  line-height: 1.65;
+  line-height: 1.7;
+  font-size: 1.02rem;
 }
-.container { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  z-index: 40;
+}
+.skip-link:focus { top: 12px; }
+.container { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
 .site-header {
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-  padding: 14px 0;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  padding: 12px 0;
 }
 .header-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-.brand { font-weight: 800; font-size: 1.15rem; color: var(--text); text-decoration: none; letter-spacing: -0.02em; }
-.nav { display: flex; gap: 18px; flex-wrap: wrap; }
-.nav a { color: var(--muted); text-decoration: none; font-size: 0.95rem; font-weight: 500; }
-.nav a:hover { color: var(--accent); }
-main { padding: 32px 0 48px; }
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: -0.03em;
+}
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-hot) 0%, var(--accent-2) 100%);
+  box-shadow: 0 4px 10px rgba(67, 56, 202, 0.28);
+  position: relative;
+  flex-shrink: 0;
+}
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  width: 8px;
+  height: 13px;
+  border-right: 3px solid #fff;
+  border-bottom: 3px solid #fff;
+  transform: rotate(40deg);
+}
+.nav { display: flex; gap: 6px 18px; flex-wrap: wrap; }
+.nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 6px 0;
+}
+.nav a:hover, .nav a:focus { color: var(--accent); }
+main { padding: 32px 0 64px; }
 .hero {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px;
-  margin-bottom: 24px;
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow);
 }
-.hero h1 { margin: 0 0 10px; font-size: 1.9rem; line-height: 1.25; }
-.hero p { margin: 0 0 16px; color: var(--muted); }
+.hero h1 { margin: 0 0 12px; font-size: clamp(1.8rem, 3vw, 2.55rem); line-height: 1.15; letter-spacing: -0.03em; }
+.hero p { margin: 0 0 16px; color: var(--muted); font-size: 1.08rem; }
+.hero-home {
+  background: linear-gradient(135deg, #0f766e 0%, #1d4ed8 55%, #4338ca 100%);
+  color: #fff;
+  border: 0;
+  padding: 48px 40px 40px;
+}
+.hero-home p { color: rgba(255, 255, 255, 0.92); }
+.hero-home .search-input {
+  background: #fff;
+  color: var(--text);
+  border: 0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+.hero-home .badge-cat {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.hero-home .badge-cat:hover { background: #fff; color: var(--accent-2); }
+.hero-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .search-input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 1rem;
-  background: var(--bg);
+  font-family: inherit;
+  background: #fff;
 }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.search-input:focus {
+  outline: 3px solid rgba(13, 148, 136, 0.35);
+  border-color: var(--accent-hot);
+}
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 18px; margin-bottom: 32px; }
 .card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 18px;
+  border-radius: var(--radius);
+  padding: 20px 20px 18px;
+  box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
-.card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.guide-card { display: flex; flex-direction: column; gap: 2px; min-height: 100%; }
+.card:hover, .guide-card:focus-within {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+  border-color: #99f6e4;
+}
+.card h3 { margin: 8px 0 6px; font-size: 1.12rem; letter-spacing: -0.02em; line-height: 1.35; }
 .card a { color: var(--accent); text-decoration: none; }
-.card a:hover { text-decoration: underline; }
+.card h3 a { color: var(--text); }
+.card h3 a:hover, .card a:hover { color: var(--accent-2); text-decoration: underline; }
 .badge {
   display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 3px 9px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
-  margin-right: 6px;
+  margin: 0 6px 6px 0;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
 }
-.muted { color: var(--muted); font-size: 0.92rem; }
+.badge-cat { border: 1px solid transparent; }
+.badge-cat-gyms-fitness { background: #ccfbf1; color: #0f766e; }
+.badge-cat-delivery-rideshare { background: #ffedd5; color: #9a3412; }
+.badge-cat-wearables-hardware { background: #e0e7ff; color: #3730a3; }
+.badge-cat-software-apps { background: #ede9fe; color: #6d28d9; }
+.badge-cat-ai-saas { background: #fae8ff; color: #a21caf; }
+.badge-cat-news-magazines, .badge-cat-media-news { background: #fff7ed; color: #c2410c; }
+.badge-cat-streaming-apps { background: #dbeafe; color: #1d4ed8; }
+.badge-cat-consumer-rights { background: #dcfce7; color: #15803d; }
+.muted { color: var(--muted); font-size: 0.94rem; }
+.crumb { margin-bottom: 14px; }
 .fact-box {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: linear-gradient(180deg, #f0fdfa 0%, #fff 70%);
+  border: 1px solid #99f6e4;
+  border-radius: 14px;
   padding: 18px 20px;
   margin: 20px 0;
 }
-.fact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
-.fact-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.fact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.fact-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); font-weight: 700; }
 .fact-val { font-weight: 600; margin-top: 2px; word-break: break-word; }
 .alert-box {
   background: var(--warn-bg);
-  border-left: 4px solid var(--warn-border);
-  padding: 12px 16px;
-  border-radius: 6px;
+  border: 1px solid #fed7aa;
+  border-left: 5px solid var(--warn-border);
+  padding: 14px 16px;
+  border-radius: 10px;
   margin: 18px 0;
+  color: var(--warn-text);
 }
 article {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px;
+  border-radius: 20px;
+  padding: 32px 36px;
+  box-shadow: var(--shadow);
 }
-article h1 { margin-top: 8px; line-height: 1.25; }
-article h2 { margin-top: 28px; border-bottom: 1px solid var(--border); padding-bottom: 6px; font-size: 1.25rem; }
+article h1 { margin-top: 8px; line-height: 1.2; font-size: clamp(1.6rem, 2.6vw, 2.15rem); letter-spacing: -0.03em; }
+article h2 {
+  margin-top: 36px;
+  border-bottom: 0;
+  padding-bottom: 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+article ol {
+  list-style: none;
+  counter-reset: step;
+  padding-left: 0;
+  margin: 16px 0;
+}
+article ol > li {
+  counter-increment: step;
+  position: relative;
+  padding: 14px 16px 14px 62px;
+  margin: 0 0 10px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+article ol > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent-2));
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(67, 56, 202, 0.25);
+}
 blockquote {
   margin: 16px 0;
-  padding: 10px 16px;
-  border-left: 3px solid var(--accent);
+  padding: 14px 18px;
+  border-left: 4px solid var(--accent-hot);
   background: var(--accent-soft);
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 12px 12px 0;
+  color: #134e4a;
 }
 pre {
-  background: #0d1117;
-  color: #e6edf3;
+  background: #0f172a;
+  color: #e2e8f0;
   padding: 14px 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow-x: auto;
   font-size: 0.9rem;
 }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; }
 .sources { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); }
-.site-footer { border-top: 1px solid var(--border); padding: 22px 0; font-size: 0.9rem; }
-.legal-page { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 28px; }
-.legal-page h1 { margin-top: 0; }
+.site-footer {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 36px 0 24px;
+  font-size: 0.95rem;
+}
+.footer-inner { display: flex; justify-content: space-between; gap: 28px; flex-wrap: wrap; margin-bottom: 20px; }
+.footer-brand { max-width: 420px; }
+.footer-logo { color: #fff; margin: 0 0 8px; }
+.footer-brand p { margin: 0; color: #cbd5e1; }
+.footer-nav { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-start; }
+.footer-nav a, .site-footer a { color: #99f6e4; text-decoration: none; font-weight: 600; }
+.footer-nav a:hover, .site-footer a:hover { text-decoration: underline; color: #fff; }
+.footer-note { color: #94a3b8 !important; margin: 0; padding-top: 12px; border-top: 1px solid rgba(148, 163, 184, 0.25); }
+.legal-page { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px 36px; box-shadow: var(--shadow); }
+.legal-page h1 { margin-top: 0; letter-spacing: -0.03em; }
+.btn {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent-hot), var(--accent-2));
+  color: #fff !important;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(67, 56, 202, 0.25);
+}
+.btn:hover { filter: brightness(1.06); text-decoration: none !important; }
 .ad-slot { margin: 0; padding: 0; min-height: 0; }
 .ad-slot.is-active { margin: 0 0 16px; min-height: 90px; }
 .table-wrap { overflow-x: auto; margin: 16px 0; }
 table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 0.95rem; }
 th, td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
-th { background: var(--accent-soft); }
+th { background: var(--accent-soft); color: #134e4a; }
+@media (max-width: 720px) {
+  .hero-home { padding: 32px 20px; border-radius: 18px; }
+  article, .legal-page { padding: 22px 18px; }
+  .nav { gap: 8px 14px; }
+  article ol > li { padding-left: 56px; }
+}
 """
 
-ABOUT_BODY = """
+def about_body() -> str:
+    return f"""
 <article class="legal-page">
   <h1>About CancelPath</h1>
+  <p class="muted">Last updated: 27 November 2026.</p>
   <p>CancelPath is an independent, free directory of verified routes for canceling subscriptions and memberships. Official help pages, billing portals, and mobile apps often hide, relocate, or break the cancel button. We publish one practical, source-cited guide at a time so people can find the working path before the next charge hits.</p>
-  <h2>How guides are written</h2>
+  <h2>How guides are researched</h2>
+  <p>Each page starts from real, recent public complaints — typically posts on X or Reddit describing a failed cancel, a surprise renewal, or a billing-channel mismatch. Those reports are then cross-checked against the company's official help pages or account portals and, when a claim involves consumer rights, against regulator materials (for example CFPB or FTC guidance, or a cited state cancellation rule). We do not invent URLs, cutoff dates, phone numbers, quotes, or legal conclusions. Every factual claim is cited on the page.</p>
+  <h2>Editorial independence</h2>
   <ul>
-    <li>Each page starts from a real, recent complaint (public posts on X or Reddit) and is checked against the company's official support or terms page.</li>
-    <li>We do not invent URLs, cutoff dates, phone numbers, or quotes. Every claim is cited.</li>
-    <li>CancelPath is not affiliated with Planet Fitness, WHOOP, Oura, Apple, Google, or any other service named in a guide.</li>
+    <li>CancelPath is not affiliated with Planet Fitness, WHOOP, Oura, Apple, Google, Uber, or any other service named in a guide.</li>
+    <li>Editorial choices are independent of advertisers. Advertising and affiliate links are not active yet. Reserved slots exist in the page layout for a future approved ad unit; they stay empty until a network is connected and disclosed.</li>
+    <li>No user accounts, comments, or payments are collected on this site.</li>
   </ul>
+  <h2>Not legal advice</h2>
+  <p>CancelPath guides are general information about cancellation routes and publicly available consumer-protection materials. They are not legal advice, and they are not a substitute for advice from a qualified attorney or from the company or regulator that issued a given rule. Always confirm cancellation in writing and check your next statement.</p>
   <h2>Project status</h2>
-  <p>The site is a static directory published at <a href="https://dongwook482.github.io/cancelpath/">dongwook482.github.io/cancelpath</a> from the public repository <a href="https://github.com/DongWook482/cancelpath">github.com/DongWook482/cancelpath</a>. No user accounts, comments, or payments are collected here.</p>
-  <p>Advertising and affiliate links are not active yet. Reserved slots exist in the page layout for a future approved ad unit; they stay empty until a network is connected and disclosed.</p>
-  <p>We use Google Analytics 4 to measure visits. Details are in the <a href="https://dongwook482.github.io/cancelpath/privacy.html">Privacy Policy</a>.</p>
-  <h2>Contact</h2>
-  <p>For corrections to a guide, open an issue or pull request on the public GitHub repository linked above.</p>
+  <p>The site is a static directory published at <a href="https://dongwook482.github.io/cancelpath/">dongwook482.github.io/cancelpath</a> from the public repository <a href="https://github.com/DongWook482/cancelpath">github.com/DongWook482/cancelpath</a>.</p>
+  <p>We use Google Analytics 4 to measure visits. Details are in the <a href="{href('privacy.html')}">Privacy Policy</a>. For corrections or feedback, see the <a href="{href('contact.html')}">Contact</a> page.</p>
+</article>
+"""
+
+
+def contact_body() -> str:
+    return f"""
+<article class="legal-page">
+  <h1>Contact CancelPath</h1>
+  <p class="muted">Last updated: 27 November 2026.</p>
+  <p>Use this page to report a correction, a broken official link, or other feedback about a CancelPath guide.</p>
+  <h2>Corrections and feedback</h2>
+  <p>The public feedback channel is GitHub Issues on the CancelPath site repository:</p>
+  <p><a class="btn" href="https://github.com/DongWook482/cancelpath/issues">Open a GitHub Issue</a></p>
+  <p>Please include the guide URL, what looks wrong, and a link to the official help page or regulator source if you have one. New issues are public.</p>
+  <h2>Email</h2>
+  <p>A public email address is not listed on this site yet. Email contact can be added later. Until then, please use GitHub Issues for corrections and feedback.</p>
+  <p>CancelPath does not offer legal advice or personal case handling through this contact channel.</p>
 </article>
 """
 
@@ -485,9 +718,9 @@ def build() -> None:
             else ""
         )
         body = f"""
-        <p class="muted"><a href="{href('index.html')}">Directory</a> / <a href="{href('categories/' + e['category_slug'] + '.html')}">{html.escape(e['category'])}</a> / {html.escape(e['service_name'])}</p>
+        <p class="crumb muted"><a href="{href('index.html')}">Directory</a> / <a href="{href('categories/' + e['category_slug'] + '.html')}">{html.escape(e['category'])}</a> / {html.escape(e['service_name'])}</p>
         <article>
-          <span class="badge">{html.escape(e['category'])}</span>
+          {category_chip(e['category_slug'], e['category'], 'categories/' + e['category_slug'] + '.html')}
           <span class="badge">{html.escape(page_type_label(e))}</span>
           <h1>{html.escape(e['title'])}</h1>
           <p class="muted">Updated: {html.escape(e.get('updated_at', today))} &middot; Method: {html.escape(e.get('cancel_method', 'Web'))}</p>
@@ -530,7 +763,8 @@ def build() -> None:
         name, desc = cat_meta_map.get(slug, (slug.replace("-", " ").title(), "Cancellation guides in this category."))
         if cat_entries:
             cards = "".join(
-                f"""<div class="card">
+                f"""<div class="card guide-card">
+                  {category_chip(e['category_slug'], e['category'], 'categories/' + e['category_slug'] + '.html')}
                   <span class="badge">{html.escape(page_type_label(e))}</span>
                   <h3><a href="{href('guides/' + e['slug'] + '.html')}">{html.escape(e['title'])}</a></h3>
                   <p class="muted">{html.escape(e['summary'])}</p>
@@ -541,7 +775,7 @@ def build() -> None:
             cards = '<div class="card"><p class="muted">No guides published in this category yet. Nightly publishing adds one verified guide per day.</p></div>'
 
         cat_body = f"""
-        <p class="muted"><a href="{href('index.html')}">Directory</a> / <a href="{href('categories/index.html')}">Categories</a> / {html.escape(name)}</p>
+        <p class="crumb muted"><a href="{href('index.html')}">Directory</a> / <a href="{href('categories/index.html')}">Categories</a> / {html.escape(name)}</p>
         <div class="hero">
           <h1>{html.escape(name)}</h1>
           <p>{html.escape(desc)}</p>
@@ -577,7 +811,7 @@ def build() -> None:
 
     guide_cards = "".join(
         f"""<div class="card guide-card" data-search="{html.escape((e['service_name'] + ' ' + e['title'] + ' ' + e['category'] + ' ' + e['summary']).lower())}">
-          <span class="badge">{html.escape(e['category'])}</span>
+          {category_chip(e['category_slug'], e['category'], 'categories/' + e['category_slug'] + '.html')}
           <span class="badge">{html.escape(page_type_label(e))}</span>
           <h3><a href="{href('guides/' + e['slug'] + '.html')}">{html.escape(e['title'])}</a></h3>
           <p class="muted">{html.escape(e['summary'])}</p>
@@ -586,15 +820,15 @@ def build() -> None:
         for e in entries
     )
     cat_pills = "".join(
-        f'<a class="badge" href="{href("categories/" + slug + ".html")}">{html.escape(name)} ({len(by_cat.get(slug, []))})</a>'
+        category_chip(slug, f"{name} ({len(by_cat.get(slug, []))})", f"categories/{slug}.html")
         for slug, name, _ in PLANNED_CATEGORIES
     )
     index_body = f"""
-    <section class="hero">
+    <section class="hero hero-home">
       <h1>Escape Hidden Cancellation Loops.</h1>
       <p>{SITE_TAGLINE}</p>
       <input id="filterInput" class="search-input" type="search" placeholder="Filter guides by service, gym, app, or issue (e.g. Planet Fitness, billing)..." aria-label="Filter guides">
-      <div style="margin-top: 14px;">{cat_pills}</div>
+      <div class="hero-pills">{cat_pills}</div>
     </section>
 
     <h2>Published Pages ({len(entries)})</h2>
@@ -626,8 +860,16 @@ def build() -> None:
     (PUBLIC_DIR / "about.html").write_text(
         page_shell(
             f"About | {SITE_TITLE}",
-            "What CancelPath is, how guides are researched, and the current project status.",
-            ABOUT_BODY,
+            "What CancelPath is, how guides are researched, editorial independence, and the current project status.",
+            about_body(),
+        ),
+        encoding="utf-8",
+    )
+    (PUBLIC_DIR / "contact.html").write_text(
+        page_shell(
+            f"Contact | {SITE_TITLE}",
+            "How to send corrections or feedback about CancelPath guides.",
+            contact_body(),
         ),
         encoding="utf-8",
     )
@@ -659,6 +901,7 @@ def build() -> None:
         (f"{BASE_URL}/", today),
         (f"{BASE_URL}/index.html", today),
         (f"{BASE_URL}/about.html", today),
+        (f"{BASE_URL}/contact.html", today),
         (f"{BASE_URL}/privacy.html", today),
         (f"{BASE_URL}/404.html", today),
         *sitemap_urls,
